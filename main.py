@@ -31,24 +31,24 @@ T_ACH = chr(97)+chr(99)+chr(104)+chr(105)+chr(101)+chr(118)+chr(101)+chr(109)+ch
 def init_db():
 conn = sqlite3.connect(DB)
 c = conn.cursor()
-c.execute(””“CREATE TABLE IF NOT EXISTS players (
+c.execute(chr(34)+chr(34)+chr(34)CREATE TABLE IF NOT EXISTS players (
 id TEXT PRIMARY KEY, name TEXT,
 level INTEGER DEFAULT 1, xp INTEGER DEFAULT 0,
 hp INTEGER DEFAULT 100, gold INTEGER DEFAULT 0,
-created_at TEXT)”””)
-c.execute(””“CREATE TABLE IF NOT EXISTS grammar_records (
+created_at TEXT)chr(34)+chr(34)+chr(34))
+c.execute(chr(34)+chr(34)+chr(34)CREATE TABLE IF NOT EXISTS grammar_records (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 player_id TEXT, zone TEXT, question_type TEXT,
-correct INTEGER, answered_at TEXT)”””)
-c.execute(””“CREATE TABLE IF NOT EXISTS vocab_records (
+correct INTEGER, answered_at TEXT)chr(34)+chr(34)+chr(34))
+c.execute(chr(34)+chr(34)+chr(34)CREATE TABLE IF NOT EXISTS vocab_records (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 player_id TEXT, word TEXT, category TEXT, difficulty TEXT,
 correct_count INTEGER DEFAULT 0, wrong_count INTEGER DEFAULT 0,
 next_review TEXT, ease_factor REAL DEFAULT 2.5,
-interval_days INTEGER DEFAULT 1, last_reviewed TEXT)”””)
-c.execute(””“CREATE TABLE IF NOT EXISTS achievements (
+interval_days INTEGER DEFAULT 1, last_reviewed TEXT)chr(34)+chr(34)+chr(34))
+c.execute(chr(34)+chr(34)+chr(34)CREATE TABLE IF NOT EXISTS achievements (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
-player_id TEXT, achievement_key TEXT, earned_at TEXT)”””)
+player_id TEXT, achievement_key TEXT, earned_at TEXT)chr(34)+chr(34)+chr(34))
 conn.commit()
 conn.close()
 
@@ -60,7 +60,7 @@ return sqlite3.connect(DB)
 def get_player(pid):
 conn = get_db()
 c = conn.cursor()
-c.execute(””“SELECT id,name,level,xp,hp,gold,created_at FROM players WHERE id=?”””, (pid,))
+c.execute(chr(34)+chr(34)+chr(34)SELECT id,name,level,xp,hp,gold,created_at FROM players WHERE id=?chr(34)+chr(34)+chr(34), (pid,))
 row = c.fetchone()
 conn.close()
 if not row:
@@ -133,7 +133,7 @@ conn = get_db()
 c = conn.cursor()
 now = datetime.now().isoformat()
 nm = data.name if data.name else chr(72)+chr(101)+chr(114)+chr(111)
-c.execute(””“INSERT INTO players (id, name, created_at) VALUES (?,?,?)”””, (data.player_id, nm, now))
+c.execute(chr(34)+chr(34)+chr(34)INSERT INTO players (id, name, created_at) VALUES (?,?,?)chr(34)+chr(34)+chr(34), (data.player_id, nm, now))
 conn.commit()
 conn.close()
 return {chr(115)+chr(117)+chr(99)+chr(99)+chr(101)+chr(115)+chr(115): True, chr(112)+chr(108)+chr(97)+chr(121)+chr(101)+chr(114): get_player(data.player_id)}
@@ -150,16 +150,16 @@ def submit_answer(data: AnswerSubmit):
 conn = get_db()
 c = conn.cursor()
 now = datetime.now().isoformat()
-c.execute(””“INSERT INTO grammar_records (player_id,zone,question_type,correct,answered_at) VALUES (?,?,?,?,?)”””,
+c.execute(chr(34)+chr(34)+chr(34)INSERT INTO grammar_records (player_id,zone,question_type,correct,answered_at) VALUES (?,?,?,?,?)chr(34)+chr(34)+chr(34),
 (data.player_id, data.zone, data.question_type, 1 if data.correct else 0, now))
 if data.correct:
-c.execute(””“UPDATE players SET xp=xp+?, gold=gold+10 WHERE id=?”””, (data.xp_gained, data.player_id))
+c.execute(chr(34)+chr(34)+chr(34)UPDATE players SET xp=xp+?, gold=gold+10 WHERE id=?chr(34)+chr(34)+chr(34), (data.xp_gained, data.player_id))
 else:
-c.execute(””“UPDATE players SET hp=MAX(0,hp-10) WHERE id=?”””, (data.player_id,))
-c.execute(””“SELECT xp FROM players WHERE id=?”””, (data.player_id,))
+c.execute(chr(34)+chr(34)+chr(34)UPDATE players SET hp=MAX(0,hp-10) WHERE id=?chr(34)+chr(34)+chr(34), (data.player_id,))
+c.execute(chr(34)+chr(34)+chr(34)SELECT xp FROM players WHERE id=?chr(34)+chr(34)+chr(34), (data.player_id,))
 row = c.fetchone()
 if row:
-c.execute(””“UPDATE players SET level=? WHERE id=?”””, (calc_level(row[0]), data.player_id))
+c.execute(chr(34)+chr(34)+chr(34)UPDATE players SET level=? WHERE id=?chr(34)+chr(34)+chr(34), (calc_level(row[0]), data.player_id))
 conn.commit()
 conn.close()
 return {chr(115)+chr(117)+chr(99)+chr(99)+chr(101)+chr(115)+chr(115): True, chr(112)+chr(108)+chr(97)+chr(121)+chr(101)+chr(114): get_player(data.player_id)}
@@ -168,7 +168,7 @@ return {chr(115)+chr(117)+chr(99)+chr(99)+chr(101)+chr(115)+chr(115): True, chr(
 def get_analysis(player_id: str):
 conn = get_db()
 c = conn.cursor()
-c.execute(””“SELECT question_type,SUM(correct),COUNT(*) FROM grammar_records WHERE player_id=? GROUP BY question_type”””, (player_id,))
+c.execute(chr(34)+chr(34)+chr(34)SELECT question_type,SUM(correct),COUNT(*) FROM grammar_records WHERE player_id=? GROUP BY question_typechr(34)+chr(34)+chr(34), (player_id,))
 rows = c.fetchall()
 conn.close()
 result = []
@@ -182,7 +182,7 @@ return {chr(97)+chr(110)+chr(97)+chr(108)+chr(121)+chr(115)+chr(105)+chr(115): r
 def review_vocab(data: VocabReview):
 conn = get_db()
 c = conn.cursor()
-c.execute(””“SELECT id,ease_factor,interval_days FROM vocab_records WHERE player_id=? AND word=?”””, (data.player_id, data.word))
+c.execute(chr(34)+chr(34)+chr(34)SELECT id,ease_factor,interval_days FROM vocab_records WHERE player_id=? AND word=?chr(34)+chr(34)+chr(34), (data.player_id, data.word))
 row = c.fetchone()
 now = datetime.now().isoformat()
 interval = 1 if data.rating == chr(97)+chr(103)+chr(97)+chr(105)+chr(110) else 3 if data.rating == chr(104)+chr(97)+chr(114)+chr(100) else 7
@@ -191,10 +191,10 @@ if row:
 new_ease = max(1.3, row[1] + (-0.2 if interval==1 else -0.1 if interval==3 else 0.1))
 new_int = 1 if interval==1 else max(1, int(row[2]*new_ease))
 next_review = (datetime.now() + timedelta(days=new_int)).isoformat()
-c.execute(””“UPDATE vocab_records SET ease_factor=?,interval_days=?,next_review=?,last_reviewed=? WHERE id=?”””,
+c.execute(chr(34)+chr(34)+chr(34)UPDATE vocab_records SET ease_factor=?,interval_days=?,next_review=?,last_reviewed=? WHERE id=?chr(34)+chr(34)+chr(34),
 (new_ease, new_int, next_review, now, row[0]))
 else:
-c.execute(””“INSERT INTO vocab_records (player_id,word,category,difficulty,next_review,ease_factor,interval_days,last_reviewed) VALUES (?,?,?,?,?,2.5,?,?)”””,
+c.execute(chr(34)+chr(34)+chr(34)INSERT INTO vocab_records (player_id,word,category,difficulty,next_review,ease_factor,interval_days,last_reviewed) VALUES (?,?,?,?,?,2.5,?,?)chr(34)+chr(34)+chr(34),
 (data.player_id, data.word, data.category, data.difficulty, next_review, interval, now))
 conn.commit()
 conn.close()
@@ -205,7 +205,7 @@ def get_due(player_id: str):
 conn = get_db()
 c = conn.cursor()
 now = datetime.now().isoformat()
-c.execute(””“SELECT word,category,difficulty FROM vocab_records WHERE player_id=? AND next_review<=? LIMIT 20”””, (player_id, now))
+c.execute(chr(34)+chr(34)+chr(34)SELECT word,category,difficulty FROM vocab_records WHERE player_id=? AND next_review<=? LIMIT 20chr(34)+chr(34)+chr(34), (player_id, now))
 rows = c.fetchall()
 conn.close()
 return {chr(100)+chr(117)+chr(101)+chr(95)+chr(99)+chr(111)+chr(117)+chr(110)+chr(116): len(rows),
@@ -264,7 +264,7 @@ return {chr(114)+chr(101)+chr(112)+chr(108)+chr(121): resp.content[0].text}
 def get_achievements(player_id: str):
 conn = get_db()
 c = conn.cursor()
-c.execute(””“SELECT achievement_key,earned_at FROM achievements WHERE player_id=?”””, (player_id,))
+c.execute(chr(34)+chr(34)+chr(34)SELECT achievement_key,earned_at FROM achievements WHERE player_id=?chr(34)+chr(34)+chr(34), (player_id,))
 rows = c.fetchall()
 conn.close()
 return {chr(97)+chr(99)+chr(104)+chr(105)+chr(101)+chr(118)+chr(101)+chr(109)+chr(101)+chr(110)+chr(116)+chr(115): [{chr(107)+chr(101)+chr(121): r[0], chr(101)+chr(97)+chr(114)+chr(110)+chr(101)+chr(100): r[1]} for r in rows]}
