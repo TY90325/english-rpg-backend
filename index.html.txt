@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>英文勇者 ⚔️</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --panel: #111827;
+  --card: #1a2035;
+  --border: #2a3550;
+  --border2: #3a4a6a;
+  --text: #e8eeff;
+  --muted: #5a6a8a;
+  --dim: #1e2840;
+  --gold: #ffd700;
+  --gold2: #ffaa00;
+  --green: #00ff88;
+  --red: #ff4466;
+  --blue: #4488ff;
+  --purple: #aa66ff;
+  --cyan: #00ddff;
+  --pixel: 'Press Start 2P', monospace;
+  --body: 'Noto Sans TC', sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* Scanline effect */
+body::after {
+content:’’;
+position:fixed;
+inset:0;
+background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+pointer-events:none;
+z-index:999;
+}
+
+/* Stars bg */
+body::before {
+content:’’;
+position:fixed;
+inset:0;
+background-image:
+radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.2) 0%, transparent 100%),
+radial-gradient(1px 1px at 60% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+radial-gradient(1px 1px at 80% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+radial-gradient(1px 1px at 45% 40%, rgba(100,200,255,0.4) 0%, transparent 100%),
+radial-gradient(2px 2px at 70% 30%, rgba(255,215,0,0.3) 0%, transparent 100%);
+pointer-events:none;
+z-index:0;
+}
+
+.screen { display:none; flex-direction:column; min-height:100dvh; position:relative; z-index:1; }
+.screen.active { display:flex; animation:fadeIn 0.25s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════════════════════════════════
+WORLD MAP / HOME
+═══════════════════════════════════ */
+.world-header {
+padding: 52px 20px 20px;
+text-align: center;
+background: linear-gradient(180deg, rgba(17,24,39,0.98) 0%, transparent 100%);
+}
+
+.game-logo {
+font-family: var(–pixel);
+font-size: 14px;
+color: var(–gold);
+text-shadow: 0 0 20px rgba(255,215,0,0.5), 2px 2px 0 #7a5a00;
+letter-spacing: 2px;
+margin-bottom: 6px;
+line-height: 1.6;
+}
+
+.game-sub { font-size:11px; color:var(–muted); font-family:var(–mono); letter-spacing:1px; }
+
+/* Character panel */
+.char-panel {
+margin: 16px;
+background: var(–card);
+border: 2px solid var(–border2);
+border-radius: 16px;
+padding: 16px;
+position: relative;
+overflow: hidden;
+}
+.char-panel::before {
+content:’’;
+position:absolute;
+top:0;left:0;right:0;height:2px;
+background: linear-gradient(90deg, var(–purple), var(–blue), var(–cyan));
+}
+
+.char-top { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+
+.char-sprite {
+width:64px; height:64px;
+border-radius:50%;
+background: linear-gradient(135deg, #2a1a5e, #1a3a5e);
+border: 2px solid var(–purple);
+display:flex; align-items:center; justify-content:center;
+font-size:32px;
+box-shadow: 0 0 20px rgba(170,102,255,0.4);
+flex-shrink:0;
+position:relative;
+}
+
+.char-info { flex:1; }
+.char-name { font-family:var(–pixel); font-size:10px; color:var(–gold); margin-bottom:4px; }
+.char-class { font-size:11px; color:var(–purple); font-family:var(–mono); margin-bottom:8px; }
+
+.hp-bar-wrap { margin-bottom:6px; }
+.bar-label { display:flex; justify-content:space-between; font-family:var(–mono); font-size:9px; margin-bottom:4px; }
+.bar-label .name { color:var(–muted); }
+.bar-label .val { color:var(–text); }
+.bar-bg { height:10px; background:var(–dim); border-radius:5px; overflow:hidden; border:1px solid var(–border); }
+.bar-fill { height:100%; border-radius:5px; transition:width 0.5s ease; }
+.hp-fill { background: linear-gradient(90deg, #ff4466, #ff8844); }
+.xp-fill { background: linear-gradient(90deg, var(–blue), var(–cyan)); }
+.mp-fill { background: linear-gradient(90deg, var(–purple), #cc44ff); }
+
+.char-stats {
+display:grid; grid-template-columns:1fr 1fr 1fr;
+gap:8px; margin-top:12px;
+}
+.cstat {
+background:var(–dim);
+border:1px solid var(–border);
+border-radius:10px;
+padding:8px;
+text-align:center;
+}
+.cstat-val { font-family:var(–pixel); font-size:10px; color:var(–gold); }
+.cstat-label { font-size:9px; color:var(–muted); margin-top:4px; font-family:var(–mono); }
+
+/* World zones */
+.world-title { font-family:var(–pixel); font-size:8px; color:var(–muted); letter-spacing:2px; padding:0 20px 10px; }
+
+.zone-list { padding:0 16px; display:flex; flex-direction:column; gap:10px; }
+
+.zone-card {
+background:var(–card);
+border:2px solid var(–border);
+border-radius:16px;
+padding:16px;
+display:flex;
+align-items:center;
+gap:14px;
+cursor:pointer;
+transition:all 0.2s;
+position:relative;
+overflow:hidden;
+}
+.zone-card::after {
+content:’’;
+position:absolute;
+inset:0;
+background:linear-gradient(135deg, rgba(255,255,255,0.02), transparent);
+}
+.zone-card:active { transform:scale(0.97); }
+.zone-card.locked { opacity:0.5; cursor:not-allowed; }
+.zone-card.active-zone { border-color:var(–gold); box-shadow:0 0 16px rgba(255,215,0,0.2); }
+
+.zone-icon {
+width:52px; height:52px;
+border-radius:12px;
+display:flex; align-items:center; justify-content:center;
+font-size:26px; flex-shrink:0;
+}
+.zone-info { flex:1; }
+.zone-name { font-family:var(–pixel); font-size:9px; color:var(–text); margin-bottom:4px; }
+.zone-desc { font-size:11px; color:var(–muted); margin-bottom:6px; line-height:1.4; }
+.zone-progress-bar { height:4px; background:var(–dim); border-radius:2px; overflow:hidden; }
+.zone-progress-fill { height:100%; border-radius:2px; }
+
+.zone-badge {
+font-family:var(–mono); font-size:9px; padding:3px 8px; border-radius:6px; flex-shrink:0;
+}
+.badge-active { background:rgba(0,255,136,0.15); color:var(–green); border:1px solid rgba(0,255,136,0.3); }
+.badge-locked { background:var(–dim); color:var(–muted); border:1px solid var(–border); }
+.badge-new { background:rgba(255,215,0,0.15); color:var(–gold); border:1px solid rgba(255,215,0,0.3); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+.spacer { height:80px; flex-shrink:0; }
+
+/* ═══════════════════════════════════
+BATTLE SCREEN
+═══════════════════════════════════ */
+.battle-header {
+padding:52px 16px 14px;
+background:var(–panel);
+border-bottom:2px solid var(–border);
+position:sticky; top:0; z-index:20;
+}
+
+.battle-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.back-btn {
+width:36px; height:36px;
+border-radius:10px;
+border:2px solid var(–border2);
+background:var(–card);
+color:var(–text); font-size:16px;
+display:flex; align-items:center; justify-content:center;
+cursor:pointer; flex-shrink:0;
+}
+.battle-title { font-family:var(–pixel); font-size:10px; color:var(–gold); flex:1; line-height:1.6; }
+
+.battle-hud {
+display:grid; grid-template-columns:1fr auto 1fr;
+gap:10px; align-items:center;
+}
+
+.player-hud, .enemy-hud { }
+.hud-name { font-family:var(–mono); font-size:9px; color:var(–muted); margin-bottom:4px; }
+.hud-bar { height:8px; background:var(–dim); border-radius:4px; overflow:hidden; }
+.hud-hp { background:linear-gradient(90deg, var(–green), #44ff88); }
+.enemy-hp { background:linear-gradient(90deg, var(–red), #ff8844); transition:width 0.5s ease; }
+.hud-val { font-family:var(–pixel); font-size:8px; text-align:right; margin-top:3px; color:var(–text); }
+.enemy-hud .hud-val { text-align:left; }
+
+.vs-badge {
+font-family:var(–pixel); font-size:12px; color:var(–gold);
+text-shadow:0 0 10px rgba(255,215,0,0.5);
+padding:0 8px;
+}
+
+/* Battle arena */
+.battle-arena {
+flex:1; display:flex; flex-direction:column; align-items:center; padding:20px 16px;
+}
+
+.monster-zone {
+width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:20px;
+}
+
+.monster-sprite {
+font-size:72px;
+animation:float 3s ease-in-out infinite;
+filter:drop-shadow(0 0 20px rgba(170,102,255,0.4));
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+.monster-name { font-family:var(–pixel); font-size:9px; color:var(–purple); text-shadow:0 0 10px rgba(170,102,255,0.5); }
+.monster-dialog {
+background:var(–card);
+border:2px solid var(–border2);
+border-radius:12px;
+padding:12px 16px;
+font-size:13px; line-height:1.6;
+max-width:90%;
+position:relative;
+text-align:center;
+}
+.monster-dialog::before {
+content:‘▲’;
+position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+color:var(–border2); font-size:12px;
+}
+
+/* Question card */
+.q-card {
+width:100%; background:var(–card);
+border:2px solid var(–border2);
+border-radius:16px; padding:18px 16px;
+margin-bottom:16px;
+}
+.q-type-tag {
+display:inline-block;
+font-family:var(–mono); font-size:9px; letter-spacing:1px;
+padding:3px 10px; border-radius:6px; margin-bottom:10px;
+background:rgba(68,136,255,0.15); color:var(–blue); border:1px solid rgba(68,136,255,0.3);
+}
+.q-text { font-size:16px; font-weight:700; line-height:1.6; }
+.q-blank {
+display:inline-block;
+border-bottom:2px solid var(–gold);
+min-width:80px;
+color:var(–gold);
+font-weight:900;
+padding:0 8px;
+}
+
+/* Answer options */
+.answer-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+.answer-btn {
+background:var(–card);
+border:2px solid var(–border2);
+border-radius:12px;
+padding:14px 12px;
+font-family:var(–body);
+font-size:14px;
+color:var(–text);
+cursor:pointer;
+transition:all 0.15s;
+text-align:center;
+line-height:1.4;
+}
+.answer-btn:active { transform:scale(0.96); }
+.answer-btn.correct {
+background:rgba(0,255,136,0.12);
+border-color:var(–green);
+color:var(–green);
+animation:correctPulse 0.4s ease;
+}
+.answer-btn.wrong {
+background:rgba(255,68,102,0.12);
+border-color:var(–red);
+color:var(–red);
+animation:shake 0.4s ease;
+}
+@keyframes correctPulse { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+/* Damage float */
+.damage-float {
+position:fixed;
+font-family:var(–pixel);
+font-size:14px;
+pointer-events:none;
+z-index:500;
+animation:dmgFloat 1s ease forwards;
+}
+@keyframes dmgFloat {
+0% { opacity:1; transform:translateY(0) scale(1); }
+100% { opacity:0; transform:translateY(-60px) scale(1.3); }
+}
+
+/* Result overlay */
+.result-overlay {
+position:fixed; inset:0; background:rgba(0,0,0,0.85);
+z-index:300; display:none; flex-direction:column;
+align-items:center; justify-content:center; gap:16px;
+animation:fadeIn 0.3s ease;
+}
+.result-overlay.show { display:flex; }
+
+.result-box {
+background:var(–card);
+border:3px solid var(–gold);
+border-radius:20px;
+padding:32px 28px;
+text-align:center;
+max-width:320px;
+width:90%;
+box-shadow:0 0 40px rgba(255,215,0,0.3);
+}
+.result-title { font-family:var(–pixel); font-size:16px; color:var(–gold); margin-bottom:16px; line-height:1.6; text-shadow:0 0 20px rgba(255,215,0,0.5); }
+.result-emoji { font-size:64px; margin-bottom:12px; display:block; }
+.result-desc { font-size:14px; color:var(–muted); line-height:1.7; margin-bottom:16px; }
+.result-rewards { display:flex; gap:16px; justify-content:center; margin-bottom:20px; }
+.reward-item { text-align:center; }
+.reward-val { font-family:var(–pixel); font-size:12px; color:var(–gold); }
+.reward-label { font-size:10px; color:var(–muted); margin-top:4px; font-family:var(–mono); }
+
+.btn-pixel {
+display:block; width:100%;
+background:linear-gradient(180deg, var(–gold2), #cc8800);
+border:2px solid #ffdd44;
+border-radius:12px;
+padding:14px;
+font-family:var(–pixel);
+font-size:10px;
+color:#1a0a00;
+cursor:pointer;
+letter-spacing:1px;
+transition:all 0.15s;
+box-shadow:0 4px 0 #885500;
+}
+.btn-pixel:active { transform:translateY(3px); box-shadow:0 1px 0 #885500; }
+
+/* ═══════════════════════════════════
+VOCABULARY DUNGEON
+═══════════════════════════════════ */
+.dungeon-content { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+
+.vocab-battle-card {
+background:var(–card);
+border:2px solid var(–border2);
+border-radius:20px;
+padding:28px 20px;
+text-align:center;
+min-height:200px;
+display:flex; flex-direction:column;
+justify-content:center; align-items:center; gap:10px;
+cursor:pointer;
+position:relative;
+box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.vocab-battle-card::before {
+content:’’;
+position:absolute; inset:0;
+background:linear-gradient(135deg, rgba(170,102,255,0.05), transparent);
+border-radius:18px;
+}
+
+.word-level { position:absolute; top:14px; right:16px; font-family:var(–mono); font-size:10px; color:var(–purple); }
+.word-category { font-family:var(–mono); font-size:9px; letter-spacing:2px; color:var(–muted); }
+.big-word { font-family:var(–pixel); font-size:20px; color:var(–text); letter-spacing:2px; line-height:1.5; }
+.word-phonetic { font-family:var(–mono); font-size:13px; color:var(–muted); }
+.word-divider { width:40px; height:2px; background:var(–border2); }
+.word-zh { font-size:18px; font-weight:700; color:var(–cyan); }
+.word-example-en { font-size:12px; color:var(–muted); font-style:italic; line-height:1.6; display:none; padding-top:10px; border-top:1px solid var(–border); width:100%; }
+.word-example-en.show { display:block; }
+
+.tap-hint { font-family:var(–mono); font-size:9px; color:var(–border2); letter-spacing:1px; margin-top:6px; }
+
+.vocab-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.va-btn {
+border-radius:14px; padding:14px 8px;
+border:2px solid var(–border2);
+background:var(–card);
+display:flex; flex-direction:column; align-items:center; gap:5px;
+font-family:var(–body); font-size:12px; cursor:pointer; transition:all 0.15s;
+}
+.va-btn .ico { font-size:20px; }
+.va-btn.again:active { background:rgba(255,68,102,0.1); border-color:var(–red); }
+.va-btn.hard:active { background:rgba(255,215,0,0.1); border-color:var(–gold); }
+.va-btn.easy:active { background:rgba(0,255,136,0.1); border-color:var(–green); }
+
+/* ═══════════════════════════════════
+PROGRESS / LEADERBOARD
+═══════════════════════════════════ */
+.progress-content { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; }
+
+.skill-tree {
+background:var(–card); border:2px solid var(–border); border-radius:18px; padding:18px;
+}
+.skill-tree-title { font-family:var(–pixel); font-size:8px; color:var(–gold); margin-bottom:14px; letter-spacing:1px; }
+
+.skill-row { display:flex; flex-direction:column; gap:10px; }
+.skill-item { display:flex; align-items:center; gap:12px; }
+.skill-icon { font-size:22px; width:36px; text-align:center; }
+.skill-info { flex:1; }
+.skill-name { font-size:13px; font-weight:700; margin-bottom:4px; }
+.skill-bar-bg { height:8px; background:var(–dim); border-radius:4px; overflow:hidden; }
+.skill-bar-fill { height:100%; border-radius:4px; transition:width 0.6s ease; }
+.skill-pct { font-family:var(–mono); font-size:11px; width:36px; text-align:right; }
+
+.achievement-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.achievement {
+background:var(–card); border:2px solid var(–border); border-radius:14px;
+padding:14px 12px; text-align:center;
+}
+.achievement.earned { border-color:var(–gold); background:rgba(255,215,0,0.05); }
+.achievement .a-icon { font-size:28px; margin-bottom:6px; }
+.achievement .a-name { font-size:12px; font-weight:700; }
+.achievement .a-desc { font-size:10px; color:var(–muted); margin-top:3px; }
+.achievement.locked .a-icon { filter:grayscale(1); opacity:0.4; }
+
+.ai-analysis {
+background:rgba(68,136,255,0.07);
+border:2px solid rgba(68,136,255,0.2);
+border-radius:16px; padding:16px;
+font-size:13px; line-height:1.7; color:#a0b8e0;
+}
+.ai-analysis strong { color:var(–text); }
+
+/* ═══════════════════════════════════
+BOTTOM NAV
+═══════════════════════════════════ */
+.bottom-nav {
+position:fixed; bottom:0; left:0; right:0;
+background:rgba(10,14,26,0.96);
+backdrop-filter:blur(12px);
+border-top:2px solid var(–border);
+display:flex; padding:10px 0 28px; z-index:100;
+}
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:6px; transition:all 0.15s; }
+.nav-item .n-ico { font-size:22px; }
+.nav-item .n-label { font-size:9px; color:var(–muted); font-family:var(–pixel); letter-spacing:0.5px; line-height:1.6; }
+.nav-item.active .n-label { color:var(–gold); }
+
+/* Combo indicator */
+.combo-bar {
+position:fixed; top:100px; right:16px;
+background:var(–card); border:2px solid var(–gold);
+border-radius:12px; padding:8px 12px;
+text-align:center; z-index:50;
+display:none; animation:fadeIn 0.2s;
+}
+.combo-bar.show { display:block; }
+.combo-num { font-family:var(–pixel); font-size:16px; color:var(–gold); text-shadow:0 0 10px rgba(255,215,0,0.5); }
+.combo-label { font-family:var(–mono); font-size:8px; color:var(–muted); }
+</style>
+
+</head>
+<body>
+
+<!-- ══ WORLD MAP ══ -->
+
+<div class="screen active" id="s-world">
+  <div class="world-header">
+    <div class="game-logo">⚔️ ENGLISH QUEST ⚔️</div>
+    <div class="game-sub">學士後中醫英文冒險</div>
+  </div>
+
+  <div class="char-panel" style="margin:12px 16px">
+    <div class="char-top">
+      <div class="char-sprite">🧙</div>
+      <div class="char-info">
+        <div class="char-name">ENGLISH HERO</div>
+        <div class="char-class">⚗️ 醫學見習生 LV.7</div>
+        <div class="hp-bar-wrap">
+          <div class="bar-label"><span class="name">❤️ HP</span><span class="val">80/100</span></div>
+          <div class="bar-bg"><div class="bar-fill hp-fill" style="width:80%"></div></div>
+        </div>
+        <div class="hp-bar-wrap">
+          <div class="bar-label"><span class="name">⭐ XP</span><span class="val">340/500</span></div>
+          <div class="bar-bg"><div class="bar-fill xp-fill" style="width:68%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="char-stats">
+      <div class="cstat"><div class="cstat-val">127</div><div class="cstat-label">單字</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--green)">78%</div><div class="cstat-label">正確率</div></div>
+      <div class="cstat"><div class="cstat-val" style="color:var(--purple)">🔥3</div><div class="cstat-label">連續天</div></div>
+    </div>
+  </div>
+
+  <div class="world-title">▶ 選擇地圖</div>
+  <div class="zone-list">
+
+```
+<div class="zone-card active-zone" onclick="enterZone('grammar-j')">
+  <div class="zone-icon" style="background:rgba(0,255,136,0.1)">🏰</div>
+  <div class="zone-info">
+    <div class="zone-name">國中文法城堡</div>
+    <div class="zone-desc">時態、冠詞、代名詞基礎文法</div>
+    <div class="zone-progress-bar"><div class="zone-progress-fill" style="width:65%;background:var(--green)"></div></div>
+  </div>
+  <div class="zone-badge badge-active">65%</div>
+</div>
+
+<div class="zone-card" onclick="enterZone('grammar-h')">
+  <div class="zone-icon" style="background:rgba(68,136,255,0.1)">🗼</div>
+  <div class="zone-info">
+    <div class="zone-name">高中文法塔</div>
+    <div class="zone-desc">分詞、假設語氣、倒裝句</div>
+    <div class="zone-progress-bar"><div class="zone-progress-fill" style="width:28%;background:var(--blue)"></div></div>
+  </div>
+  <div class="zone-badge badge-active">28%</div>
+</div>
+
+<div class="zone-card" onclick="enterZone('vocab-basic')">
+  <div class="zone-icon" style="background:rgba(255,215,0,0.1)">⚔️</div>
+  <div class="zone-info">
+    <div class="zone-name">單字競技場</div>
+    <div class="zone-desc">國高中核心字彙 3000 個</div>
+    <div class="zone-progress-bar"><div class="zone-progress-fill" style="width:42%;background:var(--gold)"></div></div>
+  </div>
+  <div class="zone-badge badge-new">NEW</div>
+</div>
+
+<div class="zone-card" onclick="enterZone('vocab-medical')">
+  <div class="zone-icon" style="background:rgba(170,102,255,0.1)">🔬</div>
+  <div class="zone-info">
+    <div class="zone-name">醫學英文迷宮</div>
+    <div class="zone-desc">中醫考試必備醫學術語</div>
+    <div class="zone-progress-bar"><div class="zone-progress-fill" style="width:15%;background:var(--purple)"></div></div>
+  </div>
+  <div class="zone-badge badge-active">15%</div>
+</div>
+
+<div class="zone-card" onclick="enterZone('vocab-gre')">
+  <div class="zone-icon" style="background:rgba(0,221,255,0.1)">🌌</div>
+  <div class="zone-info">
+    <div class="zone-name">GRE 星域</div>
+    <div class="zone-desc">高階學術單字，考試加分</div>
+    <div class="zone-progress-bar"><div class="zone-progress-fill" style="width:5%;background:var(--cyan)"></div></div>
+  </div>
+  <div class="zone-badge badge-locked">LV.15+</div>
+</div>
+```
+
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ BATTLE ══ -->
+
+<div class="screen" id="s-battle">
+  <div class="battle-header">
+    <div class="battle-top">
+      <button class="back-btn" onclick="goTo('s-world')">←</button>
+      <div class="battle-title" id="battle-zone-name">國中文法城堡</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--gold)" id="battle-count">1/10</div>
+    </div>
+    <div class="battle-hud">
+      <div class="player-hud">
+        <div class="hud-name">🧙 你的HP</div>
+        <div class="hud-bar"><div class="hud-hp" id="player-hp-bar" style="width:100%"></div></div>
+        <div class="hud-val" id="player-hp-val">100 / 100</div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="enemy-hud">
+        <div class="hud-name" style="text-align:right">BOSS HP</div>
+        <div class="hud-bar"><div class="enemy-hp" id="enemy-hp-bar" style="width:100%"></div></div>
+        <div class="hud-val" id="enemy-hp-val">100 / 100</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="battle-arena">
+    <div class="monster-zone">
+      <div class="monster-sprite" id="monster-sprite">👾</div>
+      <div class="monster-name" id="monster-name">文法魔王</div>
+      <div class="monster-dialog" id="monster-dialog">答對我的問題才能通過！</div>
+    </div>
+
+```
+<div class="q-card" id="q-card">
+  <div class="q-type-tag" id="q-type">文法題</div>
+  <div class="q-text" id="q-text">載入題目中...</div>
+</div>
+
+<div class="answer-grid" id="answer-grid"></div>
+```
+
+  </div>
+</div>
+
+<!-- ══ VOCAB DUNGEON ══ -->
+
+<div class="screen" id="s-vocab">
+  <div class="battle-header" style="position:sticky;top:0;z-index:20">
+    <div class="battle-top">
+      <button class="back-btn" onclick="goTo('s-world')">←</button>
+      <div class="battle-title">單字地下城</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--gold)" id="vocab-counter">1/8</div>
+    </div>
+  </div>
+  <div class="dungeon-content">
+    <div class="vocab-battle-card" onclick="flipVocab()" id="vocab-card">
+      <div class="word-level" id="v-level">GRE</div>
+      <div class="word-category" id="v-cat">MEDICAL</div>
+      <div class="big-word" id="v-word">OSMOSIS</div>
+      <div class="word-phonetic" id="v-phone">/ɒzˈməʊsɪs/</div>
+      <div class="word-divider"></div>
+      <div class="word-zh" id="v-zh">滲透作用</div>
+      <div class="word-example-en" id="v-example">Water moves through the membrane via osmosis, from low to high solute concentration.</div>
+      <div class="tap-hint">▼ TAP FOR EXAMPLE ▼</div>
+    </div>
+    <div class="vocab-actions">
+      <button class="va-btn again" onclick="nextVocab('again')"><span class="ico">💀</span>還不會<br><span style="font-size:9px;color:var(--muted)">明天再來</span></button>
+      <button class="va-btn hard" onclick="nextVocab('hard')"><span class="ico">🤔</span>模糊<br><span style="font-size:9px;color:var(--muted)">3天後</span></button>
+      <button class="va-btn easy" onclick="nextVocab('easy')"><span class="ico">⚡</span>記住了<br><span style="font-size:9px;color:var(--muted)">+20 XP</span></button>
+    </div>
+
+```
+<div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px 16px">
+  <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:10px;letter-spacing:1px">▶ 快速測驗</div>
+  <div id="quick-quiz-area">
+    <div id="quick-q" style="font-size:15px;font-weight:700;margin-bottom:12px">「滲透」的英文是？</div>
+    <div id="quick-opts" style="display:flex;flex-direction:column;gap:7px"></div>
+  </div>
+</div>
+<div class="spacer"></div>
+```
+
+  </div>
+</div>
+
+<!-- ══ PROGRESS ══ -->
+
+<div class="screen" id="s-progress">
+  <div class="battle-header" style="position:sticky;top:0;z-index:20">
+    <div class="battle-top">
+      <button class="back-btn" onclick="goTo('s-world')">←</button>
+      <div class="battle-title">冒險紀錄</div>
+    </div>
+  </div>
+  <div class="progress-content">
+
+```
+<div class="skill-tree">
+  <div class="skill-tree-title">▶ 技能樹</div>
+  <div class="skill-row">
+    <div class="skill-item">
+      <div class="skill-icon">⚔️</div>
+      <div class="skill-info">
+        <div class="skill-name">基礎文法</div>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:65%;background:var(--green)"></div></div>
+      </div>
+      <div class="skill-pct" style="color:var(--green)">65%</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-icon">🏰</div>
+      <div class="skill-info">
+        <div class="skill-name">高中文法</div>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:28%;background:var(--blue)"></div></div>
+      </div>
+      <div class="skill-pct" style="color:var(--blue)">28%</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-icon">📚</div>
+      <div class="skill-info">
+        <div class="skill-name">核心單字</div>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:42%;background:var(--gold)"></div></div>
+      </div>
+      <div class="skill-pct" style="color:var(--gold)">42%</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-icon">🔬</div>
+      <div class="skill-info">
+        <div class="skill-name">醫學英文</div>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:15%;background:var(--purple)"></div></div>
+      </div>
+      <div class="skill-pct" style="color:var(--purple)">15%</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-icon">🌌</div>
+      <div class="skill-info">
+        <div class="skill-name">GRE 字彙</div>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:5%;background:var(--cyan)"></div></div>
+      </div>
+      <div class="skill-pct" style="color:var(--cyan)">5%</div>
+    </div>
+  </div>
+</div>
+
+<div class="achievement-grid">
+  <div class="achievement earned">
+    <div class="a-icon">🔥</div>
+    <div class="a-name">連勝初學者</div>
+    <div class="a-desc">連續答對 5 題</div>
+  </div>
+  <div class="achievement earned">
+    <div class="a-icon">⚔️</div>
+    <div class="a-name">第一關攻略</div>
+    <div class="a-desc">完成國中文法</div>
+  </div>
+  <div class="achievement locked">
+    <div class="a-icon">🏆</div>
+    <div class="a-name">文法大師</div>
+    <div class="a-desc">全關卡 80%+</div>
+  </div>
+  <div class="achievement locked">
+    <div class="a-icon">🌌</div>
+    <div class="a-name">GRE 挑戰者</div>
+    <div class="a-desc">解鎖 GRE 星域</div>
+  </div>
+</div>
+
+<div class="ai-analysis">
+  <strong>🤖 AI 分析你的弱點</strong><br><br>
+  根據你過去 <strong>127 次</strong>練習，最常答錯的是：<br><br>
+  1. <strong style="color:var(--red)">假設語氣</strong> — 正確率僅 42%，建議重新練習 If 句型<br>
+  2. <strong style="color:var(--gold)">分詞構句</strong> — 54%，需加強<br>
+  3. <strong style="color:var(--cyan)">醫學術語</strong> — 字根記憶法最有效<br><br>
+  建議本週優先挑戰「高中文法塔」，預計 5 天可提升至 50%。
+</div>
+<div class="spacer"></div>
+```
+
+  </div>
+</div>
+
+<!-- Combo -->
+
+<div class="combo-bar" id="combo-bar">
+  <div class="combo-num" id="combo-num">3x</div>
+  <div class="combo-label">COMBO!</div>
+</div>
+
+<!-- Result overlay -->
+
+<div class="result-overlay" id="result-overlay">
+  <div class="result-box">
+    <span class="result-emoji" id="result-emoji">🏆</span>
+    <div class="result-title" id="result-title">STAGE CLEAR!</div>
+    <div class="result-desc" id="result-desc">完美通關！你的文法技能大幅提升！</div>
+    <div class="result-rewards">
+      <div class="reward-item"><div class="reward-val" id="reward-xp">+150 XP</div><div class="reward-label">經驗值</div></div>
+      <div class="reward-item"><div class="reward-val" id="reward-gold">+50 🪙</div><div class="reward-label">金幣</div></div>
+    </div>
+    <button class="btn-pixel" onclick="continueGame()">▶ 繼續冒險</button>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="goTo('s-world')" id="nav-world">
+    <div class="n-ico">🗺️</div><div class="n-label">地圖</div>
+  </div>
+  <div class="nav-item" onclick="goTo('s-vocab')" id="nav-vocab">
+    <div class="n-ico">⚔️</div><div class="n-label">單字</div>
+  </div>
+  <div class="nav-item" onclick="goTo('s-progress')" id="nav-prog">
+    <div class="n-ico">📊</div><div class="n-label">紀錄</div>
+  </div>
+</div>
+
+<script>
+// ═══════════ DATA ═══════════
+const ZONES = {
+  'grammar-j': { name:'國中文法城堡', monster:'👹', monsterName:'時態惡魔', color:'var(--green)' },
+  'grammar-h': { name:'高中文法塔', monster:'🐉', monsterName:'假設語氣龍', color:'var(--blue)' },
+  'vocab-basic': { name:'單字競技場', monster:'👾', monsterName:'字彙亡靈', color:'var(--gold)' },
+  'vocab-medical': { name:'醫學英文迷宮', monster:'🧟', monsterName:'醫學術語鬼', color:'var(--purple)' },
+  'vocab-gre': { name:'GRE 星域', monster:'👽', monsterName:'GRE 宇宙體', color:'var(--cyan)' },
+};
+
+const QUESTIONS = {
+  'grammar-j': [
+    { type:'時態', q:'She ___ to school every day.', opts:['go','goes','going','gone'], ans:1, explain:'第三人稱單數現在式用 goes' },
+    { type:'冠詞', q:'I saw ___ elephant at the zoo.', opts:['a','an','the','no article'], ans:1, explain:'elephant 以母音開頭，用 an' },
+    { type:'代名詞', q:'This is ___ book. (Mary)', opts:['she','her','hers','herself'], ans:1, explain:'修飾名詞用所有格 her' },
+    { type:'時態', q:'They ___ dinner when I called.', opts:['have','had','were having','are having'], ans:2, explain:'過去進行式：were + V-ing' },
+    { type:'連接詞', q:'I studied hard ___ I failed.', opts:['because','so','but','and'], ans:2, explain:'前後語意相反用 but' },
+    { type:'比較', q:'Tom is ___ in the class.', opts:['tall','taller','the tallest','most tall'], ans:2, explain:'最高級 the + -est' },
+    { type:'被動', q:'The letter ___ by Mary yesterday.', opts:['write','wrote','was written','written'], ans:2, explain:'被動語態：be + p.p.' },
+    { type:'不定詞', q:'I want ___ a doctor.', opts:['be','being','to be','been'], ans:2, explain:'want + to V（不定詞）' },
+    { type:'問句', q:'___ do you go to school?', opts:['What','Where','Which','When'], ans:1, explain:'問地點用 Where' },
+    { type:'現在完成', q:'I ___ never eaten sushi.', opts:['am','was','have','had'], ans:2, explain:'現在完成式：have + p.p.' },
+  ],
+  'grammar-h': [
+    { type:'假設語氣', q:'If I ___ you, I would study harder.', opts:['am','was','were','be'], ans:2, explain:'與現在事實相反的假設用 were' },
+    { type:'分詞構句', q:'___ the book, she went to sleep.', opts:['Read','Reading','Having read','Reads'], ans:2, explain:'完成分詞構句：Having + p.p.' },
+    { type:'倒裝句', q:'Never ___ I seen such a thing.', opts:['have','had','has','did'], ans:0, explain:'否定副詞置首倒裝：Never have I...' },
+    { type:'關係子句', q:'The man ___ I met was kind.', opts:['who','whom','whose','which'], ans:1, explain:'受格關係代名詞用 whom' },
+    { type:'假設語氣', q:'I wish I ___ fly like a bird.', opts:['can','could','will','would'], ans:1, explain:'wish 後面用 could 表示不可能的願望' },
+  ],
+  'vocab-basic': [
+    { type:'字義', q:'「勤勉的」英文是？', opts:['diligent','elegant','frequent','evident'], ans:0, explain:'diligent = 勤勉的（di-lig-ent）' },
+    { type:'字義', q:'「感激」英文是？', opts:['grateful','hateful','fateful','wasteful'], ans:0, explain:'grateful = 感激的（-ful 形容詞字尾）' },
+    { type:'字義', q:'「複雜的」英文是？', opts:['simple','complex','plain','clear'], ans:1, explain:'complex = 複雜的，opposite: simple' },
+  ],
+  'vocab-medical': [
+    { type:'醫學', q:'「有絲分裂」英文是？', opts:['meiosis','mitosis','necrosis','neurosis'], ans:1, explain:'mitosis = 有絲分裂（mit = thread）' },
+    { type:'醫學', q:'「新陳代謝」英文是？', opts:['metabolism','catabolism','anabolism','symbolism'], ans:0, explain:'metabolism = 所有化學反應的總稱' },
+    { type:'醫學', q:'「抗體」英文是？', opts:['antigen','antibody','antibiotic','antidote'], ans:1, explain:'antibody = 免疫系統產生對抗外來物的蛋白質' },
+  ],
+};
+
+const VOCABS = [
+  { word:'OSMOSIS', phone:'/ɒzˈməʊsɪs/', cat:'MEDICAL', level:'B2', zh:'滲透作用', ex:'Water moves through a semipermeable membrane via osmosis.' },
+  { word:'DILIGENT', phone:'/ˈdɪlɪdʒənt/', cat:'BASIC', level:'B1', zh:'勤勉的', ex:'She is diligent and always finishes her homework on time.' },
+  { word:'METABOLISM', phone:'/məˈtæbəlɪzəm/', cat:'MEDICAL', level:'B2', zh:'新陳代謝', ex:'Exercise boosts your metabolism significantly.' },
+  { word:'AMBIGUOUS', phone:'/æmˈbɪɡjuəs/', cat:'GRE', level:'B2+', zh:'模糊的；含糊不清', ex:'His answer was ambiguous and hard to interpret.' },
+  { word:'MITOSIS', phone:'/maɪˈtəʊsɪs/', cat:'MEDICAL', level:'B2', zh:'有絲分裂', ex:'During mitosis, one cell divides into two identical daughter cells.' },
+  { word:'ELOQUENT', phone:'/ˈeləkwənt/', cat:'GRE', level:'C1', zh:'口才流利的', ex:'She gave an eloquent speech that moved the audience.' },
+  { word:'LYMPHOCYTE', phone:'/ˈlɪmfəsaɪt/', cat:'MEDICAL', level:'C1', zh:'淋巴細胞', ex:'Lymphocytes play a crucial role in the immune system.' },
+  { word:'METICULOUS', phone:'/məˈtɪkjʊləs/', cat:'GRE', level:'C1', zh:'一絲不苟的', ex:'She was meticulous in her research methodology.' },
+];
+
+// ═══════════ STATE ═══════════
+let currentZone = 'grammar-j';
+let questions = [];
+let qIdx = 0;
+const BACKEND = "https://english-rpg-backend-production.up.railway.app";
+const PLAYER_ID = localStorage.getItem("rpg_player_id") || (() => { const id = "player_" + Date.now(); localStorage.setItem("rpg_player_id", id); return id; })();
+
+async function syncPlayer() {
+  try {
+    const r = await fetch(BACKEND + "/player/create", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({player_id: PLAYER_ID, name: "英文勇者"})
+    });
+    const d = await r.json();
+    if (d.player) {
+      document.querySelector(".cstat-val").textContent = d.player.level || 1;
+    }
+  } catch(e) { console.log("Backend offline, using local mode"); }
+}
+
+async function submitAnswer(zone, qtype, correct, xp) {
+  try {
+    await fetch(BACKEND + "/answer/submit", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({player_id: PLAYER_ID, zone, question_type: qtype, correct, xp_gained: xp})
+    });
+  } catch(e) {}
+}
+
+let playerHP = 100;
+let enemyHP = 100;
+let combo = 0;
+let vocabIdx = 0;
+let vocabFlipped = false;
+let apiKey = localStorage.getItem('claudeApiKey') || '';
+
+// ═══════════ NAV ═══════════
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const map = {'s-world':'nav-world','s-vocab':'nav-vocab','s-progress':'nav-prog'};
+  if (map[id]) document.getElementById(map[id]).classList.add('active');
+}
+
+// ═══════════ BATTLE ═══════════
+function enterZone(zoneKey) {
+  currentZone = zoneKey;
+  const zone = ZONES[zoneKey];
+  questions = [...(QUESTIONS[zoneKey] || QUESTIONS['grammar-j'])];
+  // shuffle
+  questions = questions.sort(() => Math.random() - 0.5);
+  qIdx = 0; playerHP = 100; enemyHP = 100; combo = 0;
+
+  document.getElementById('battle-zone-name').textContent = zone.name;
+  document.getElementById('monster-sprite').textContent = zone.monster;
+  document.getElementById('monster-name').textContent = zone.monsterName;
+  document.getElementById('monster-name').style.color = zone.color;
+
+  updateBattleHUD();
+  loadQuestion();
+  goTo('s-battle');
+}
+
+function loadQuestion() {
+  if (qIdx >= questions.length) { showResult(true); return; }
+  const q = questions[qIdx];
+  document.getElementById('battle-count').textContent = `${qIdx+1}/${questions.length}`;
+  document.getElementById('q-type').textContent = q.type;
+  document.getElementById('q-text').innerHTML = q.q.replace('___', '<span class="q-blank">___</span>');
+
+  const monsters = ['答對才能前進！', '你敢挑戰我嗎？', '這題不簡單喔...', '看看你的實力！'];
+  document.getElementById('monster-dialog').textContent = monsters[qIdx % monsters.length];
+
+  const grid = document.getElementById('answer-grid');
+  grid.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answerQ(i, q.ans, btn, q);
+    grid.appendChild(btn);
+  });
+}
+
+function answerQ(chosen, correct, btn, q) {
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach(b => b.onclick = null);
+
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    combo++;
+    enemyHP = Math.max(0, enemyHP - (20 + combo * 5));
+    showDamage(`⚔️ -${20 + combo * 5}`, 'var(--green)');
+    document.getElementById('monster-dialog').textContent = q.explain + ' ✅';
+    showCombo();
+  } else {
+    btn.classList.add('wrong');
+    btns[correct].classList.add('correct');
+    combo = 0;
+    playerHP = Math.max(0, playerHP - 20);
+    showDamage('💔 -20', 'var(--red)');
+    document.getElementById('monster-dialog').textContent = q.explain + ' ❌';
+    hideCombo();
+  }
+
+  updateBattleHUD();
+
+  if (playerHP <= 0) { setTimeout(() => showResult(false), 1000); return; }
+  if (enemyHP <= 0) { setTimeout(() => showResult(true), 1000); return; }
+
+  setTimeout(() => { qIdx++; loadQuestion(); }, 1200);
+}
+
+function updateBattleHUD() {
+  document.getElementById('player-hp-bar').style.width = playerHP + '%';
+  document.getElementById('player-hp-val').textContent = `${playerHP} / 100`;
+  document.getElementById('enemy-hp-bar').style.width = enemyHP + '%';
+  document.getElementById('enemy-hp-val').textContent = `${enemyHP} / 100`;
+}
+
+function showDamage(text, color) {
+  const el = document.createElement('div');
+  el.className = 'damage-float';
+  el.style.cssText = `color:${color};top:200px;left:${40 + Math.random()*20}%;font-family:var(--pixel);font-size:14px;`;
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function showCombo() {
+  if (combo < 2) return;
+  const bar = document.getElementById('combo-bar');
+  document.getElementById('combo-num').textContent = `${combo}x`;
+  bar.classList.add('show');
+  clearTimeout(window._comboTimer);
+  window._comboTimer = setTimeout(() => bar.classList.remove('show'), 2000);
+}
+function hideCombo() { document.getElementById('combo-bar').classList.remove('show'); }
+
+function showResult(win) {
+  const overlay = document.getElementById('result-overlay');
+  document.getElementById('result-emoji').textContent = win ? '🏆' : '💀';
+  document.getElementById('result-title').textContent = win ? 'STAGE CLEAR!' : 'GAME OVER';
+  document.getElementById('result-desc').textContent = win
+    ? `太強了！擊敗了 ${ZONES[currentZone].monsterName}！連擊最高 ${combo}x` 
+    : '不要灰心！重新挑戰，你可以的！';
+  const xp = win ? 100 + combo * 10 : 20;
+  document.getElementById('reward-xp').textContent = `+${xp} XP`;
+  document.getElementById('reward-gold').textContent = win ? `+${50 + combo * 5} 🪙` : '+5 🪙';
+  overlay.classList.add('show');
+}
+
+function continueGame() {
+  document.getElementById('result-overlay').classList.remove('show');
+  goTo('s-world');
+}
+
+// ═══════════ VOCAB ═══════════
+function loadVocab() {
+  const v = VOCABS[vocabIdx];
+  document.getElementById('v-level').textContent = v.level;
+  document.getElementById('v-cat').textContent = v.cat;
+  document.getElementById('v-word').textContent = v.word;
+  document.getElementById('v-phone').textContent = v.phone;
+  document.getElementById('v-zh').textContent = v.zh;
+  document.getElementById('v-example').textContent = v.ex;
+  document.getElementById('v-example').classList.remove('show');
+  document.getElementById('vocab-counter').textContent = `${vocabIdx+1}/${VOCABS.length}`;
+  vocabFlipped = false;
+  loadQuickQuiz(v);
+}
+
+function flipVocab() {
+  vocabFlipped = !vocabFlipped;
+  document.getElementById('v-example').classList.toggle('show', vocabFlipped);
+}
+
+function nextVocab(rating) {
+  vocabIdx = (vocabIdx + 1) % VOCABS.length;
+  loadVocab();
+}
+
+function loadQuickQuiz(v) {
+  document.getElementById('quick-q').textContent = `「${v.zh}」的英文是？`;
+  const opts = [v.word, VOCABS[(vocabIdx+1)%VOCABS.length].word, VOCABS[(vocabIdx+2)%VOCABS.length].word, VOCABS[(vocabIdx+3)%VOCABS.length].word];
+  const shuffled = opts.sort(() => Math.random() - 0.5);
+  const container = document.getElementById('quick-opts');
+  container.innerHTML = '';
+  shuffled.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;font-family:var(--body);font-size:13px;color:var(--text);text-align:left;cursor:pointer;transition:all 0.15s;width:100%';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      const correct = opt === v.word;
+      btn.style.borderColor = correct ? 'var(--green)' : 'var(--red)';
+      btn.style.color = correct ? 'var(--green)' : 'var(--red)';
+      container.querySelectorAll('button').forEach(b => b.onclick = null);
+      if (correct) showDamage('⚡ +20 XP', 'var(--gold)');
+    };
+    container.appendChild(btn);
+  });
+}
+
+window.onload = () => { loadVocab(); syncPlayer(); };
+</script>
+
+</body>
+</html>
