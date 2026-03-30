@@ -8,8 +8,7 @@ import os
 import anthropic
 from datetime import datetime, timedelta
 
-app = FastAPI()
-
+app = FastAPI(title=“English RPG API”)
 
 app.add_middleware(
 CORSMiddleware,
