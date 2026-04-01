@@ -6,7 +6,13 @@ import sqlite3, json, os, anthropic
 from datetime import datetime, timedelta
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 KEY = os.environ.get("CLAUDE_API_KEY", "")
 
